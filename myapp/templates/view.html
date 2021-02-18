@@ -18,7 +18,7 @@
 		*{ box-sizing: border-box;}
 		.main-container{
 			margin-top: 50px;
-			width: 1000px;
+			width: 500px;
 			max-width: 100%;
 			display: flex;
 		}
@@ -40,13 +40,14 @@
 			position: relative;
 		}
 		.col:nth-child(1){ 
-			width: 70%;
+			/* width: 70%; */
+			width: 100%;
 		}
 		.col:nth-child(2){ 
 			width: 30%;
 		}
 		.table-container{
-			height: calc(100vh - 150px);
+			/* height: calc(100vh - 150px); */
 			overflow: auto;
 		}
 		table{
@@ -76,6 +77,28 @@
 				<canvas id="chart"></canvas>
 			</div>
 			<div class="card">
+				<div class="table-container">
+					<table>
+						<thead>
+							<tr>
+								<th>Timestamp</th>
+								<th>Salinity</th>
+							</tr>
+						</thead>
+						<tbody id="table"></tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<!-- <div class="main-container">
+		<div class="col">
+			<div class="card">
+				<div class="main-title">Salinity Meter</div>
+				<canvas id="chart"></canvas>
+			</div>
+			<div class="card">
 
 			</div>
 		</div>
@@ -94,7 +117,7 @@
 				</div>
 			</div>
 		</div>
-	</div>
+	</div> -->
 
 	<script>
 
