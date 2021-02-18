@@ -38,6 +38,6 @@ class ChatConsumer(WebsocketConsumer):
 
 	def data_message(self, event):
 		self.send(text_data=json.dumps({
-			'timestamp': timezone.now().isoformat(),
+			'timestamp': event['timestamp'],
 			'salinity': event['salinity'],
 		}))
