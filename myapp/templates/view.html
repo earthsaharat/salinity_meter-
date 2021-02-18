@@ -1,0 +1,191 @@
+{% load static %}
+<!DOCTYPE html>
+<html lang="en">
+<head>
+	<meta charset="UTF-8">
+	<meta http-equiv="X-UA-Compatible" content="IE=edge">
+	<meta name="viewport" content="width=device-width, initial-scale=1.0">
+	<title>Salinity Meter</title>
+	<script src="https://d3js.org/d3.v6.min.js"></script>
+	<script src="https://cdnjs.cloudflare.com/ajax/libs/Chart.js/2.9.4/Chart.min.js"></script>
+	<style>
+		body{
+			display: flex;
+			align-items: center;
+			justify-content: center;
+			font-family: Arial, Helvetica, sans-serif;
+		}
+		*{ box-sizing: border-box;}
+		.main-container{
+			margin-top: 50px;
+			width: 1000px;
+			max-width: 100%;
+			display: flex;
+		}
+		.main-title{
+			text-align: center;
+			margin-bottom: 20px;
+			font-size: 1.1em;
+			font-weight: bold;
+		}
+		.card{
+			border: solid 1px #ddd;
+			border-radius: 8px;
+			padding: 20px;
+			width: 100%;
+			margin-bottom: 12px;
+		}
+		.col{  
+			margin: 0 6px;
+			position: relative;
+		}
+		.col:nth-child(1){ 
+			width: 70%;
+		}
+		.col:nth-child(2){ 
+			width: 30%;
+		}
+		.table-container{
+			height: calc(100vh - 150px);
+			overflow: auto;
+		}
+		table{
+			width: 100%;
+			border-collapse: collapse;
+		}
+		th{ 
+			text-align: left;
+			line-height: 1.5em;
+		}
+		td{
+			line-height: 1.2em;
+		}
+		thead{
+			position: sticky;
+			top: 0;
+			background-color: #fff;
+		}
+	</style>
+</head>
+<body>
+
+	<div class="main-container">
+		<div class="col">
+			<div class="card">
+				<div class="main-title">Salinity Meter</div>
+				<canvas id="chart"></canvas>
+			</div>
+			<div class="card">
+
+			</div>
+		</div>
+		<div class="col">
+			<div class="card">
+				<div class="table-container">
+					<table>
+						<thead>
+							<tr>
+								<th>Timestamp</th>
+								<th>Salinity</th>
+							</tr>
+						</thead>
+						<tbody id="table"></tbody>
+					</table>
+				</div>
+			</div>
+		</div>
+	</div>
+
+	<script>
+
+		let data = []
+		
+		let chart = new Chart('chart', {
+			type: 'line',
+			data: {
+				datasets: [{
+						data:data,
+						borderColor: '#ff9900',
+						fill: false,
+				}],
+				labels: data.map(function(_,index){ return index })
+			},
+			options: {
+				legend:{
+					display: false,
+				},
+				tooltips: {
+					displayColors: false,
+					callbacks: {
+						title: function(tooltipItem, data) {
+							return data.datasets[0].data[tooltipItem[0].index].t.toLocaleString('EN-GB');
+						},
+						label: function(tooltipItem, data) {
+								var label = data.datasets[tooltipItem.datasetIndex].label || '';
+								label += parseFloat(tooltipItem.yLabel).toFixed(2);
+								return label;
+						},
+					}
+				},
+				scales: {
+				}
+			}
+		});
+
+		function updateChart(){
+			chart.data.datasets[0].data = data;
+			chart.data.labels = data.map(function(item,index){ return item.t.toLocaleTimeString('en-GB') })
+			chart.update();
+		}
+		function updateTable(){
+			let element_table = d3.select('#table').html('');
+			let temp_data = [...data];
+			temp_data.sort((a, b) => b.t - a.t).forEach(item => {
+				let row = element_table.append('tr');
+				row.append('td').text(item.t.toLocaleString('en-GB'));
+				row.append('td').text(item.y.toFixed(1)).style('color','#ff9900');
+			})
+		}
+
+		updateChart();
+		updateTable();
+
+		startWebSocket();
+		function startWebSocket(){
+			var chatSocket = new WebSocket('ws://' + window.location.host + '/ws/device/1');
+			chatSocket.onmessage = function(e) {
+				let payload = JSON.parse(e.data);
+				console.log(payload);
+				data.push({
+					t: new Date(payload.timestamp),
+					y: payload.salinity,
+				})
+				updateChart();
+				updateTable();
+			};
+
+			chatSocket.onopen = function(){
+				console.log('socket connect');
+				// d3.select('#realtime-status').html('<i class="fas fa-circle" style="color:#23C552"></i> Online');
+			}
+
+			var myTimer = undefined
+			chatSocket.onclose = function(e) {
+				console.error('Chat socket closed unexpectedly');
+				// d3.select('#realtime-status').html('<i class="fas fa-circle" style="color:#F84F31"></i> Offline');
+				myTimer = setInterval(socketReconnect, 1000);
+			};
+			function socketReconnect(){
+				clearInterval(myTimer);
+				startWebSocket();
+			}
+
+			function socket_test(){
+				chatSocket.send(JSON.stringify({ 'message': 'hello' }));
+			}
+		}
+
+	</script>
+	
+</body>
+</html>
