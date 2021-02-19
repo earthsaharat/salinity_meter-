@@ -4,7 +4,7 @@ import string
 import random
 
 def Device_KeyGenerate():
-  return ''.join([random.choice(string.ascii_letters + string.digits) for i in range(32)])
+  return ''.join([random.choice(string.ascii_letters + string.digits) for i in range(20)])
 
 class Device_ModelManager(models.Manager):
 	def getFromID(self,id):

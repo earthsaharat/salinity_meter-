@@ -25,7 +25,7 @@ SECRET_KEY = 'pg6ybs-%%rghed9$+j0@sd7h45a-f4e0&i5lp))dp5v^+i*_im'
 # SECURITY WARNING: don't run with debug turned on in production!
 DEBUG = True
 
-ALLOWED_HOSTS = []
+ALLOWED_HOSTS = ['localhost','salinity.saharatss.com']
 
 
 # Application definition
@@ -121,9 +121,11 @@ USE_TZ = True
 # Static files (CSS, JavaScript, Images)
 # https://docs.djangoproject.com/en/3.1/howto/static-files/
 
-STATIC_URL = '/static/'
+STATIC_URL 	= '/static/'
+STATIC_ROOT = '/root/salinity_meter/static/'
+# STATIC_ROOT = '/Users/saharatsaengsawang/Desktop/salinity_meter/static/'
 
-STATICFILES_DIRS = [BASE_DIR / "static"]
+# STATICFILES_DIRS = [BASE_DIR / "static"]
 
 ASGI_APPLICATION = "salinity_meter.routing.application"
 CHANNEL_LAYERS = {

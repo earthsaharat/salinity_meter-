@@ -55,16 +55,37 @@
 			border-collapse: collapse;
 		}
 		th{ 
-			text-align: left;
 			line-height: 1.5em;
+			white-space: nowrap;
+			text-align: left;
 		}
 		td{
 			line-height: 1.2em;
+			white-space: nowrap;
+			/* text-align: center; */
 		}
 		thead{
 			position: sticky;
 			top: 0;
 			background-color: #fff;
+		}
+
+		.input-section{
+			width: 100%;
+			display: flex;
+		}
+		.input-section .section{
+			width: 100%;
+			margin-right: 8px;
+		}
+		.input-section .section label{
+			display: block;
+			font-size: 0.9em;
+			font-weight: bold;
+			margin-bottom: 4px;
+		}
+		.input-section .section select{
+			width: 100%;
 		}
 	</style>
 </head>
@@ -76,6 +97,26 @@
 				<div class="main-title">Salinity Meter</div>
 				<canvas id="chart"></canvas>
 			</div>
+			<div class="card input-section">
+				<div class="section">
+					<label for="select_device">Device</label>
+					<select id="select_device">
+						{% for device in device_list %}
+						<option value="{{device.id}}">{{device.name}}</option>
+						{% endfor %}
+					</select>
+				</div>
+				<div class="section">
+					<label for="select_chart_range">Chart range</label>
+					<select id="select_chart_range" onchange="updateChart()">
+						<option value="10">last 10</option>
+						<option value="20">last 20</option>
+						<option value="50">last 50</option>
+						<option value="100">last 100</option>
+						<option value="all">All</option>
+					</select>
+				</div>
+			</div>
 			<div class="card">
 				<div class="table-container">
 					<table>
@@ -83,6 +124,8 @@
 							<tr>
 								<th>Timestamp</th>
 								<th>Salinity</th>
+								<th>ppm</th>
+								<th>ppt</th>
 							</tr>
 						</thead>
 						<tbody id="table"></tbody>
@@ -127,15 +170,16 @@
 			type: 'line',
 			data: {
 				datasets: [{
-						data:data,
-						borderColor: '#ff9900',
-						fill: false,
+					label:'Salinity (mS/cm)',
+					data:data,
+					borderColor: '#ff9900',
+					fill: false,
 				}],
 				labels: data.map(function(_,index){ return index })
 			},
 			options: {
 				legend:{
-					display: false,
+					// display: false,
 				},
 				tooltips: {
 					displayColors: false,
@@ -144,8 +188,10 @@
 							return data.datasets[0].data[tooltipItem[0].index].t.toLocaleString('EN-GB');
 						},
 						label: function(tooltipItem, data) {
-								var label = data.datasets[tooltipItem.datasetIndex].label || '';
-								label += parseFloat(tooltipItem.yLabel).toFixed(2);
+								// var label = data.datasets[tooltipItem.datasetIndex].label || '';
+								let label = 'Salinity: '
+								label += parseFloat(tooltipItem.yLabel);
+								label += ' mS/cm';
 								return label;
 						},
 					}
@@ -156,8 +202,13 @@
 		});
 
 		function updateChart(){
-			chart.data.datasets[0].data = data;
-			chart.data.labels = data.map(function(item,index){ return item.t.toLocaleTimeString('en-GB') })
+			let chart_range = d3.select('#select_chart_range').property('value');
+			let temp_data = [...data];
+			if(!isNaN(parseInt(chart_range))){
+				temp_data = temp_data.slice(-parseInt(chart_range))
+			}
+			chart.data.datasets[0].data = temp_data;
+			chart.data.labels = temp_data.map(function(item,index){ return item.t.toLocaleTimeString('en-GB') })
 			chart.update();
 		}
 		function updateTable(){
@@ -166,7 +217,9 @@
 			temp_data.sort((a, b) => b.t - a.t).forEach(item => {
 				let row = element_table.append('tr');
 				row.append('td').text(item.t.toLocaleString('en-GB'));
-				row.append('td').text(item.y.toFixed(1)).style('color','#ff9900');
+				row.append('td').text(item.y).style('color','#ff9900');
+				row.append('td').text(item.ppm).style('color','#ff9900');
+				row.append('td').text(item.ppt).style('color','#ff9900');
 			})
 		}
 
@@ -175,13 +228,15 @@
 
 		startWebSocket();
 		function startWebSocket(){
-			var chatSocket = new WebSocket('ws://' + window.location.host + '/ws/device/1');
+			var chatSocket = new WebSocket('ws://' + window.location.host + '/ws/device/{{device_id}}');
 			chatSocket.onmessage = function(e) {
 				let payload = JSON.parse(e.data);
 				console.log(payload);
 				data.push({
 					t: new Date(payload.timestamp),
 					y: payload.salinity,
+					ppm: payload.ppm,
+					ppt: payload.ppt,
 				})
 				updateChart();
 				updateTable();
@@ -196,7 +251,7 @@
 			chatSocket.onclose = function(e) {
 				console.error('Chat socket closed unexpectedly');
 				// d3.select('#realtime-status').html('<i class="fas fa-circle" style="color:#F84F31"></i> Offline');
-				myTimer = setInterval(socketReconnect, 1000);
+				myTimer = setInterval(socketReconnect, 3000);
 			};
 			function socketReconnect(){
 				clearInterval(myTimer);

@@ -40,4 +40,6 @@ class ChatConsumer(WebsocketConsumer):
 		self.send(text_data=json.dumps({
 			'timestamp': event['timestamp'],
 			'salinity': event['salinity'],
+			'ppm': event['ppm'],
+			'ppt': event['ppt'],
 		}))
