@@ -34,7 +34,9 @@ def view(request,device_id):
 
 def api(request):
 	device_id 	= request.GET.get('device')
+	if device_id is None: return HttpResponse('No device')
 	device_key 	= request.GET.get('key')
+	if device_key is None: return HttpResponse('No key')
 	device_obj  = models.Device.objects.getFromID(device_id)
 	if device_obj is None: return HttpResponse('Device not found')
 	if device_obj.key != device_key: return HttpResponse('Invalid key')
@@ -42,6 +44,8 @@ def api(request):
 	salinity 		= float(request.GET.get('salinity','NaN'))
 	ppm 				= float(request.GET.get('ppm','NaN'))
 	ppt 				= float(request.GET.get('ppt','NaN'))
+	lat 				= float(request.GET.get('lat','NaN'))
+	lng 				= float(request.GET.get('lng','NaN'))
 	if device_obj.LINE_enable:
 		LineRequestFunction(
 			'Result at'+
@@ -56,5 +60,7 @@ def api(request):
 		'salinity': salinity if not math.isnan(salinity) else None,
 		'ppm': 			ppm if not math.isnan(ppm) else None,
 		'ppt': 			ppt if not math.isnan(ppt) else None,
+		'lat': 			lat if not math.isnan(lat) else None,
+		'lng': 			lng if not math.isnan(lng) else None,
 	})
 	return HttpResponse('OK')

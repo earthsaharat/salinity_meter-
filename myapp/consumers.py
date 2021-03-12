@@ -42,4 +42,6 @@ class ChatConsumer(WebsocketConsumer):
 			'salinity': event['salinity'],
 			'ppm': event['ppm'],
 			'ppt': event['ppt'],
+			'lat': event['lat'],
+			'lng': event['lng'],
 		}))
