@@ -12,10 +12,36 @@ class Device_ModelManager(models.Manager):
 		if len(devices) > 0: return devices[0]
 		return None
 
-class Device(models.Model):
+class Notification(models.Model):
 	name 				= models.CharField(max_length=50)
-	key 				= models.CharField(max_length=50,default=Device_KeyGenerate)
 	LINE_enable = models.BooleanField(default=False)
-	LINE_token 	= models.CharField(max_length=50, blank=True)
+	LINE_token 	= models.CharField(max_length=50, null=True, blank=True)
+	def __str__(self):
+		output = self.name
+		if self.LINE_enable:
+			output += ' (LINE)'
+		else:
+			output += ' (Off)'
+		return output
 
-	objects = Device_ModelManager()
+class Device_ModelManager(models.Manager):
+	def getFromID(self,id):
+		devices = super().get_queryset().filter(id=int(id))
+		if len(devices) > 0: return devices[0]
+		return None
+	def getFromSiteID(self,site_id):
+		devices = super().get_queryset().filter(site_id=site_id)
+		if len(devices) > 0: return devices[0]
+		return None
+
+class Device(models.Model):
+	objects 			= Device_ModelManager()
+	name 					= models.CharField(max_length=50)
+	key 					= models.CharField(max_length=50,default=Device_KeyGenerate,null=True,blank=True)
+	notification	= models.ForeignKey(Notification,on_delete=models.SET_NULL,null=True,blank=True)
+	is_station		= models.BooleanField(default=False)
+	site_id				= models.CharField(max_length=50,unique=True,null=True,blank=True)
+	location_lat	= models.FloatField(null=True,blank=True)
+	location_lng	= models.FloatField(null=True,blank=True)
+
+

@@ -85,7 +85,6 @@
 			display: block;
 			width: calc(100% - 400px);
 			height: 100vh;
-			background-color: red;
 		}
 
 		@media only screen and (max-width: 600px){
@@ -100,18 +99,35 @@
 				height: 50vh;
 			}
 		}
+
+		.card{
+			width: 100%;
+			padding: 12px;
+			margin-bottom: 10px;
+			background-color: #fff;
+			border-block: 2px 2px 8px 8px #ccc;
+		}
+		.card
+		.card .device-name{
+			font-size: 1em;
+		}
 	</style>
 </head>
 <body>
 	<div id="map"></div>
 	<div class="main-container">
-		<div class="main-title">Salinity Meter</div>
+		{% for device in device_list %}
+		<div class="card">
+			<div class="device-name">{{device.name}}</div>
+		</div>
+		{% endfor %}
+		<!-- <div class="main-title">Salinity Meter</div>
 		<canvas id="chart"></canvas>
 		<div class="line"></div>
 		<div class="input-section">
 			<div class="section">
 				<label for="select_device">Device</label>
-				<select id="select_device">
+				<select id="select_device" value="{{device_id}}" onchange="changeDevice(this.value)">
 					{% for device in device_list %}
 					<option value="{{device.id}}">{{device.name}}</option>
 					{% endfor %}
@@ -141,12 +157,12 @@
 				</thead>
 				<tbody id="table"></tbody>
 			</table>
-		</div>
+		</div> -->
 	</div>
 	<script>
 
 		let data = []
-		
+		/*
 		//#region chart
 		let chart = new Chart('chart', {
 			type: 'line',
@@ -179,19 +195,25 @@
 					}
 				},
 				scales: {
+					yAxes: [{
+							ticks: {
+									beginAtZero: true
+							}
+					}]
 				}
 			}
 		});
+		*/
 
 		function updateChart(){
-			let chart_range = d3.select('#select_chart_range').property('value');
-			let temp_data = [...data];
-			if(!isNaN(parseInt(chart_range))){
-				temp_data = temp_data.slice(-parseInt(chart_range))
-			}
-			chart.data.datasets[0].data = temp_data;
-			chart.data.labels = temp_data.map(function(item,index){ return item.t.toLocaleTimeString('en-GB') })
-			chart.update();
+			// let chart_range = d3.select('#select_chart_range').property('value');
+			// let temp_data = [...data];
+			// if(!isNaN(parseInt(chart_range))){
+			// 	temp_data = temp_data.slice(-parseInt(chart_range))
+			// }
+			// chart.data.datasets[0].data = temp_data;
+			// chart.data.labels = temp_data.map(function(item,index){ return item.t.toLocaleTimeString('en-GB') })
+			// chart.update();
 		}
 		function updateTable(){
 			let element_table = d3.select('#table').html('');
@@ -209,6 +231,8 @@
 		updateTable();
 
 		//#endregion
+		
+		
 		//#region map
 		let map = null;
 		let marker = null;
@@ -216,34 +240,42 @@
 		function initMap() {
 			const uluru = { lat: 13.7563, lng: 100.5018 };
 			map = new google.maps.Map(document.getElementById("map"), {
-			  zoom: 4,
-			  center: uluru,
+				zoom: 4,
+				center: uluru,
 			});
 			marker = new google.maps.Marker({
-			  position: uluru,
-			  map: map,
+				position: uluru,
+				map: map,
 			});
 		}
 		//#endregion
 
+		//#region change device
+		function changeDevice(device_id){
+			window.open(window.location.protocol + '//' + window.location.host+'/view/'+device_id,'_self');
+		}
+		//#endregion
+		//#region WebSocket
 		startWebSocket();
 		function startWebSocket(){
-			var chatSocket = new WebSocket('ws://' + window.location.host + '/ws/device/{{device_id}}');
+			var chatSocket = new WebSocket('ws://' + window.location.host + '/ws/device/all');
 			chatSocket.onmessage = function(e) {
 				let payload = JSON.parse(e.data);
 				console.log(payload);
 				data.push({
 					t: new Date(payload.timestamp),
-					y: payload.salinity,
-					ppm: payload.ppm,
-					ppt: payload.ppt,
+					y: payload.data.salinity,
+					ppm: payload.data.ppm,
+					ppt: payload.data.ppt,
 				})
 				updateChart();
 				updateTable();
-				var new_position = new google.maps.LatLng(payload.lat, payload.lng);
-    		marker.setPosition(new_position);
-				map.setCenter(new_position);
-				map.setZoom(13);
+				if(payload.data.lat != null && payload.data.lng != null){
+					var new_position = new google.maps.LatLng(payload.data.lat, payload.data.lng);
+					marker.setPosition(new_position);
+					map.setCenter(new_position);
+					map.setZoom(13);
+				}
 				// marker.position = { lat: payload.lat, lng: payload.lng };
 			};
 
@@ -267,6 +299,7 @@
 				chatSocket.send(JSON.stringify({ 'message': 'hello' }));
 			}
 		}
+		//#endregion
 
 	</script>
 	

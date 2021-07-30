@@ -6,7 +6,8 @@ from django.utils import timezone
 
 class ChatConsumer(WebsocketConsumer):
 	def connect(self):
-		self.room_group_name = self.scope['url_route']['kwargs']['device_id']
+		# self.room_group_name = self.scope['url_route']['kwargs']['device_id']
+		self.room_group_name = 'all'
 		async_to_sync(self.channel_layer.group_add)(
 			self.room_group_name,
 			self.channel_name
@@ -38,10 +39,7 @@ class ChatConsumer(WebsocketConsumer):
 
 	def data_message(self, event):
 		self.send(text_data=json.dumps({
-			'timestamp': event['timestamp'],
-			'salinity': event['salinity'],
-			'ppm': event['ppm'],
-			'ppt': event['ppt'],
-			'lat': event['lat'],
-			'lng': event['lng'],
+			'device_id': 	event['device_id'],
+			'timestamp': 	event['timestamp'],
+			'data':				event['data'],
 		}))
